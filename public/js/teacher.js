@@ -66,6 +66,55 @@ document.addEventListener("DOMContentLoaded", () => {
         if (sc) sc.classList.add("hidden");
     }
 
+    // ----- Auto-Generate Content with AI -----
+    window.autoGenerateContent = function () {
+        const topicInput = document.getElementById("topicInput");
+        const contentArea = document.getElementById("contentArea");
+        const classValue = document.getElementById("formClass").value;
+        const subjectValue = document.getElementById("formSubject").value;
+
+        if (!topicInput.value.trim()) {
+            showToast("Enter a topic name first!", "error");
+            topicInput.focus();
+            return;
+        }
+
+        // Show loading state
+        const btn = event.target.closest('button');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '⏳ Generating...';
+        btn.disabled = true;
+        contentArea.placeholder = 'AI is generating content... please wait...';
+
+        fetch('../api/generate_content.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                topic: topicInput.value.trim(),
+                class: classValue,
+                subject: subjectValue
+            })
+        })
+            .then(res => res.json())
+            .then(data => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+
+                if (data.success) {
+                    contentArea.value = data.content;
+                    showToast(`Content generated! (${data.word_count} words) ✨`, "success");
+                } else {
+                    showToast(data.error || "Failed to generate content", "error");
+                    contentArea.placeholder = 'Write the lesson content here...';
+                }
+            })
+            .catch(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                showToast("Network error — check XAMPP and internet connection.", "error");
+            });
+    };
+
     // ----- Show Level Form -----
     window.showAddLevelForm = function () {
         const classSelect = document.getElementById("classSelect");
@@ -165,6 +214,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 levels.forEach(level => {
                     window._levelData[level.id] = level;
                     const contentPreview = level.content ? level.content.substring(0, 80) + (level.content.length > 80 ? '...' : '') : 'No content';
+                    const safeTopic = escapeHtml(level.topic).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    const safeContent = level.content ? level.content.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, '\\n').replace(/\r/g, '') : '';
                     html += `
                         <div class="manage-level-item">
                             <div class="manage-level-info">
@@ -175,10 +226,10 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <p class="manage-level-preview">${escapeHtml(contentPreview)}</p>
                             </div>
                             <div class="manage-level-actions">
-                                <button class="btn btn-sm btn-primary" data-action="edit" data-id="${level.id}">
+                                <button class="btn btn-sm btn-primary" onclick="openEditModal(${level.id}, '${safeTopic}', '${safeContent}')">
                                     ✏️ Edit
                                 </button>
-                                <button class="btn btn-sm btn-danger" data-action="delete" data-id="${level.id}">
+                                <button class="btn btn-sm btn-danger" onclick="deleteLevel(${level.id}, '${safeTopic}')">
                                     🗑️ Delete
                                 </button>
                             </div>
@@ -188,20 +239,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 html += `</div>`;
                 container.innerHTML = html;
-
-                // Attach click handlers via event delegation
-                container.querySelectorAll('[data-action="edit"]').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const lvl = window._levelData[btn.dataset.id];
-                        if (lvl) openEditModal(lvl.id, lvl.topic, lvl.content);
-                    });
-                });
-                container.querySelectorAll('[data-action="delete"]').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const lvl = window._levelData[btn.dataset.id];
-                        if (lvl) deleteLevel(lvl.id, lvl.topic);
-                    });
-                });
             })
             .catch(() => {
                 container.innerHTML = `
@@ -344,7 +381,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                     </div>
                 `;
-                    showToast("MCQ generated and saved! 🎉", "success");
+                    showToast(`${data.questions_saved || 1} MCQ${(data.questions_saved || 1) > 1 ? 's' : ''} generated via ${data.source || 'AI'}! 🎉`, "success");
                 } else {
                     output.innerHTML = `
                     <div class="mcq-output" style="border-color: var(--rose-400);">

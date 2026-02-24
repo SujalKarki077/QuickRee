@@ -53,47 +53,183 @@ $topic   = $lesson['topic'];
 $content = $lesson['content'];
 
 // ============================================
-//  AI ENGINE: Content Analysis & MCQ Generation
+//  AI ENGINE: Gemini API + Local Fallback
 // ============================================
 
 try {
-    $mcq = generateMCQ($topic, $content, $subject, $class);
+    $mcqs = [];
+    $source = 'Local AI Engine';
 
-    if (!$mcq) {
-        echo json_encode(['success' => false, 'error' => 'Could not generate a question from this content. Try adding more detailed lesson content.']);
+    // --- Try Gemini API first ---
+    $config = include 'config.php';
+    $apiKey = $config['gemini_api_key'] ?? '';
+
+    if ($apiKey && strlen($apiKey) > 10) {
+        $geminiResult = generateWithGemini($apiKey, $topic, $content, $subject, $class);
+        if ($geminiResult && is_array($geminiResult) && count($geminiResult) > 0) {
+            $mcqs = $geminiResult;
+            $source = 'Gemini AI';
+        }
+    }
+
+    // --- Fallback to local engine ---
+    if (empty($mcqs)) {
+        $localMcq = generateMCQ($topic, $content, $subject, $class);
+        if ($localMcq) {
+            $mcqs = [$localMcq];
+            $source = 'Local AI Engine';
+        }
+    }
+
+    if (empty($mcqs)) {
+        echo json_encode(['success' => false, 'error' => 'Could not generate questions from this content. Try adding more detailed lesson content.']);
         exit;
     }
 
-    // Add explanation from the source sentence
-    if (!isset($mcq['explanation']) || empty($mcq['explanation'])) {
-        $mcq['explanation'] = 'The correct answer is related to: ' . $topic;
+    // --- Save all MCQs to Database ---
+    $levelId = $lesson['id'];
+    $saved = 0;
+
+    foreach ($mcqs as $mcq) {
+        if (!isset($mcq['question']) || !isset($mcq['correct_option'])) continue;
+
+        if (!isset($mcq['explanation']) || empty($mcq['explanation'])) {
+            $mcq['explanation'] = 'The correct answer is related to: ' . $topic;
+        }
+
+        $stmt = $conn->prepare(
+            "INSERT INTO mcqs (class, subject, level_id, question, option_a, option_b, option_c, option_d, correct_option, explanation)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        );
+        $stmt->bind_param("ssisssssss",
+            $class, $subject, $levelId,
+            $mcq['question'],
+            $mcq['option_a'], $mcq['option_b'],
+            $mcq['option_c'], $mcq['option_d'],
+            $mcq['correct_option'], $mcq['explanation']
+        );
+        $stmt->execute();
+        $stmt->close();
+        $saved++;
     }
 
-    // --- Save to Database ---
-    // Save to database with explanation and level_id
-    $levelId = $lesson['id'];
-    $stmt = $conn->prepare(
-        "INSERT INTO mcqs (class, subject, level_id, question, option_a, option_b, option_c, option_d, correct_option, explanation)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-    );
-    $stmt->bind_param("ssisssssss",
-        $class, $subject, $levelId,
-        $mcq['question'],
-        $mcq['option_a'], $mcq['option_b'],
-        $mcq['option_c'], $mcq['option_d'],
-        $mcq['correct_option'], $mcq['explanation']
-    );
-    $stmt->execute();
-    $stmt->close();
-
+    // Return the first MCQ for display + count
+    $first = $mcqs[0];
     echo json_encode([
-        'success'    => true,
-        'source'     => 'AI Content Analyzer',
-        'from_topic' => $topic
-    ] + $mcq);
+        'success'        => true,
+        'source'         => $source,
+        'from_topic'     => $topic,
+        'questions_saved' => $saved
+    ] + $first);
 
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+}
+
+// ============================================
+//  GEMINI API MCQ GENERATION
+// ============================================
+
+function generateWithGemini($apiKey, $topic, $content, $subject, $class) {
+    $prompt = "Generate 5 high-quality multiple choice questions (MCQs) based on the topic below.
+
+Strict Requirements:
+1. DO NOT ask questions that directly repeat or paraphrase the content. No simple recall or definition questions.
+2. NEVER ask vague association questions like 'Which is most closely related to X?' or 'Which is associated with X?' — these are lazy and test nothing.
+3. Questions must test application, reasoning, or critical thinking — students should THINK, not just remember.
+4. At least 3 questions must be scenario-based (e.g. 'A student observes...', 'In a village...', 'If a farmer...').
+5. Avoid obvious or trivial questions.
+6. Avoid repeating similar question patterns.
+7. Each question must have 4 plausible options (A-D).
+8. Incorrect options must be realistic and conceptually related (strong distractors).
+9. Only one correct answer per question.
+10. Do not use \"All of the above\" or \"None of the above.\"
+11. Avoid copying lines from the content directly.
+12. Vary cognitive level: 1 conceptual, 3 application-based, 1 higher-order thinking.
+
+Target Grade: Class $class
+Subject: $subject
+Topic: $topic
+
+Content:
+$content
+
+Return ONLY a valid JSON array with 5 objects. Each object must have these exact keys:
+- \"question\": the question text
+- \"option_a\": option A text
+- \"option_b\": option B text
+- \"option_c\": option C text
+- \"option_d\": option D text
+- \"correct_option\": the letter of correct answer (A, B, C, or D)
+- \"explanation\": clear educational explanation of the answer
+
+Return ONLY the JSON array, no markdown, no extra text.";
+
+    $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" . urlencode($apiKey);
+
+    $payload = json_encode([
+        'contents' => [
+            ['parts' => [['text' => $prompt]]]
+        ],
+        'generationConfig' => [
+            'temperature' => 0.7,
+            'maxOutputTokens' => 4096
+        ]
+    ]);
+
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => $payload,
+        CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_SSL_VERIFYPEER => false
+    ]);
+
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($httpCode !== 200 || !$response) return null;
+
+    $data = json_decode($response, true);
+    $text = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
+
+    if (empty($text)) return null;
+
+    // Clean markdown code fences if present
+    $text = preg_replace('/^```json\s*/i', '', trim($text));
+    $text = preg_replace('/```\s*$/', '', trim($text));
+    $text = trim($text);
+
+    $questions = json_decode($text, true);
+
+    if (!is_array($questions) || count($questions) === 0) return null;
+
+    // Normalize the questions
+    $normalized = [];
+    foreach ($questions as $q) {
+        if (!isset($q['question']) || !isset($q['correct_option'])) continue;
+
+        $correct = strtoupper(trim($q['correct_option']));
+        // Handle cases where correct_option might be "A" or "a" or "Option A"
+        if (strlen($correct) > 1) {
+            $correct = substr($correct, 0, 1);
+        }
+
+        $normalized[] = [
+            'question'       => $q['question'],
+            'option_a'       => $q['option_a'] ?? '',
+            'option_b'       => $q['option_b'] ?? '',
+            'option_c'       => $q['option_c'] ?? '',
+            'option_d'       => $q['option_d'] ?? '',
+            'correct_option' => $correct,
+            'explanation'    => $q['explanation'] ?? ''
+        ];
+    }
+
+    return count($normalized) > 0 ? $normalized : null;
 }
 
 // ============================================

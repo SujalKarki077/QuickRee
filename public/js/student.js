@@ -95,7 +95,7 @@ async function registerStudent() {
 
         // Save session and proceed
         localStorage.setItem("student_session", JSON.stringify(data.student));
-        showToast("Account created! Welcome to StudyQuest! 🎉", "success");
+        showToast("Account created! Welcome to QuickRee! 🎉", "success");
         onLoginSuccess(data.student);
     } catch (e) {
         showToast("Connection error. Is XAMPP running?", "error");

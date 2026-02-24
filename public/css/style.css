@@ -24,8 +24,17 @@
   /* Warm Accents */
   --amber-400: #fbbf24;
   --amber-500: #f59e0b;
+  --rose-50: #fff1f2;
+  --rose-300: #fda4af;
   --rose-400: #fb7185;
   --rose-500: #f43f5e;
+  --rose-600: #e11d48;
+
+  /* Emerald */
+  --emerald-50: #ecfdf5;
+  --emerald-400: #34d399;
+  --emerald-500: #10b981;
+  --emerald-600: #059669;
 
   /* Neutrals */
   --gray-50: #f8fafc;
@@ -40,8 +49,9 @@
   --gray-900: #0f172a;
 
   /* Surfaces */
-  --surface-bg: #f0f4ff;
-  --surface-card: #ffffff;
+  --surface-bg: #f0f2ff;
+  --surface-card: rgba(255, 255, 255, 0.85);
+  --surface-card-solid: #ffffff;
   --surface-elevated: #ffffff;
   --surface-overlay: rgba(15, 23, 42, 0.6);
 
@@ -87,6 +97,41 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ----- Animated Gradient Background ----- */
+body::before {
+  content: '';
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 40% 80%, rgba(52, 211, 153, 0.05) 0%, transparent 50%);
+  animation: bgFloat 20s ease-in-out infinite;
+  z-index: -1;
+  pointer-events: none;
+}
+
+@keyframes bgFloat {
+
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+
+  33% {
+    transform: translate(2%, -2%) rotate(1deg);
+  }
+
+  66% {
+    transform: translate(-1%, 1%) rotate(-1deg);
+  }
 }
 
 /* ----- Layout: App Shell ----- */
@@ -98,7 +143,9 @@ body {
 
 /* ----- Navbar ----- */
 .navbar {
-  background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+  background: linear-gradient(135deg, var(--primary-600), #7c3aed, var(--primary-700));
+  background-size: 200% 200%;
+  animation: navGradient 8s ease infinite;
   color: white;
   padding: 0 2rem;
   height: 64px;
@@ -108,7 +155,20 @@ body {
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 2px 12px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 4px 20px rgba(79, 70, 229, 0.35);
+  backdrop-filter: blur(12px);
+}
+
+@keyframes navGradient {
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
 }
 
 .navbar-brand {
@@ -132,6 +192,13 @@ body {
   justify-content: center;
   font-size: 1.2rem;
   backdrop-filter: blur(10px);
+}
+
+.navbar-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
 }
 
 .navbar-nav {
@@ -348,6 +415,8 @@ textarea {
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: all var(--duration-normal) var(--ease-out);
+  position: relative;
+  overflow: hidden;
   text-decoration: none;
   line-height: 1.4;
 }
@@ -416,16 +485,18 @@ textarea {
 /* ----- Cards ----- */
 .card {
   background: var(--surface-card);
+  backdrop-filter: blur(12px);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   overflow: hidden;
   transition: all var(--duration-normal) var(--ease-out);
-  border: 1px solid var(--gray-100);
+  border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 .card:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(99, 102, 241, 0.1);
+  transform: translateY(-3px);
+  border-color: var(--primary-200);
 }
 
 .card-header {
@@ -462,13 +533,15 @@ textarea {
 
 .level-card {
   background: var(--surface-card);
+  backdrop-filter: blur(12px);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
-  border: 2px solid var(--gray-100);
+  border: 2px solid rgba(255, 255, 255, 0.5);
   cursor: pointer;
-  transition: all var(--duration-normal) var(--ease-out);
+  transition: all 0.35s var(--ease-out);
   position: relative;
   overflow: hidden;
+  animation: cardSlideIn 0.5s var(--ease-out) both;
 }
 
 .level-card::before {
@@ -478,19 +551,73 @@ textarea {
   left: 0;
   width: 4px;
   height: 100%;
-  background: linear-gradient(180deg, var(--primary-400), var(--primary-600));
+  background: linear-gradient(180deg, var(--primary-400), #7c3aed);
   transform: scaleY(0);
   transition: transform var(--duration-normal) var(--ease-out);
 }
 
+.level-card::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
 .level-card:hover {
   border-color: var(--primary-200);
-  box-shadow: var(--shadow-lg), 0 0 0 1px var(--primary-100);
-  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg), 0 0 20px rgba(99, 102, 241, 0.12);
+  transform: translateY(-5px) scale(1.01);
 }
 
 .level-card:hover::before {
   transform: scaleY(1);
+}
+
+.level-card:hover::after {
+  opacity: 1;
+}
+
+/* Staggered animation for cards */
+.level-card:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.level-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.level-card:nth-child(3) {
+  animation-delay: 0.15s;
+}
+
+.level-card:nth-child(4) {
+  animation-delay: 0.2s;
+}
+
+.level-card:nth-child(5) {
+  animation-delay: 0.25s;
+}
+
+.level-card:nth-child(6) {
+  animation-delay: 0.3s;
+}
+
+@keyframes cardSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .level-card .level-number {
@@ -1585,4 +1712,176 @@ ol.lesson-list li::marker {
   .manage-level-preview {
     max-width: 100%;
   }
+}
+
+/* ============================================
+   VISUAL POLISH & MICRO-ANIMATIONS
+   ============================================ */
+
+/* Button shine sweep on hover */
+.btn-primary::before,
+.btn-success::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.btn-primary:hover::before,
+.btn-success:hover::before {
+  left: 100%;
+}
+
+/* Enhanced hero floating animation */
+.hero-title {
+  animation: heroFloat 3s ease-in-out infinite;
+}
+
+@keyframes heroFloat {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* Glowing badge pulse */
+.badge-primary {
+  animation: badgePulse 3s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.2);
+  }
+
+  50% {
+    box-shadow: 0 0 8px 2px rgba(99, 102, 241, 0.15);
+  }
+}
+
+/* Quiz progress bar shimmer */
+.quiz-progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      transparent 100%);
+  animation: progressShimmer 2s infinite;
+}
+
+@keyframes progressShimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.quiz-progress-fill {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Glassmorphism auth form */
+.auth-form {
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+/* Enhanced lesson content card */
+.lesson-content {
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* Level number badge glow */
+.level-card .level-number {
+  background: linear-gradient(135deg, var(--primary-100), rgba(139, 92, 246, 0.15));
+  transition: all 0.3s ease;
+}
+
+.level-card:hover .level-number {
+  background: linear-gradient(135deg, var(--primary-200), rgba(139, 92, 246, 0.25));
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.2);
+  transform: scale(1.08);
+}
+
+/* Toast notification slide-in */
+.toast {
+  animation: toastSlide 0.4s var(--ease-out);
+}
+
+@keyframes toastSlide {
+  from {
+    transform: translateX(100%) scale(0.9);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Smooth section transitions */
+.section-header h2 {
+  background: linear-gradient(135deg, var(--gray-800), var(--primary-600));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Success button style */
+.btn-success {
+  background: linear-gradient(135deg, var(--emerald-400), var(--emerald-500));
+  color: white;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.btn-success:hover {
+  background: linear-gradient(135deg, var(--emerald-500), var(--emerald-600));
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--gray-100);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gray-300);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-400);
+}
+
+/* Selection color */
+::selection {
+  background: var(--primary-200);
+  color: var(--primary-800);
 }
