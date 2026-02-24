@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="StudyQuest — A gamified learning platform. Master topics through interactive quizzes and earn XP.">
+    <title>StudyQuest — Learn. Play. Conquer.</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/student.js" defer></script>
+</head>
+
+<body>
+
+    <div class="app-wrapper">
+        <!-- Navbar -->
+        <nav class="navbar">
+            <a href="index.html" class="navbar-brand">
+                <span class="logo-icon">🎮</span>
+                StudyQuest
+            </a>
+            <div class="navbar-nav">
+                <a href="index.html" class="active">Student</a>
+                <a href="teacher.html">Teacher</a>
+            </div>
+        </nav>
+
+        <!-- Main -->
+        <main class="main-content">
+
+            <!-- Hero / Auth Section -->
+            <section class="hero" id="heroSection">
+                <!-- Login Form (default) -->
+                <div id="loginForm">
+                    <h1 class="hero-title">Welcome Back!</h1>
+                    <p class="hero-subtitle">Log in to continue your learning journey.</p>
+                    <div class="auth-form">
+                        <div class="form-group">
+                            <label for="loginUsername">Username</label>
+                            <input type="text" id="loginUsername" placeholder="Your username" autocomplete="username">
+                        </div>
+                        <div class="form-group">
+                            <label for="loginPassword">Password</label>
+                            <input type="password" id="loginPassword" placeholder="Your password"
+                                autocomplete="current-password">
+                        </div>
+                        <button class="btn btn-primary btn-block" onclick="loginStudent()">Log In 🚀</button>
+                        <p class="auth-toggle">Don't have an account? <a href="#"
+                                onclick="showRegisterForm(); return false;">Sign Up</a></p>
+                    </div>
+                </div>
+
+                <!-- Register Form (hidden) -->
+                <div id="registerForm" class="hidden">
+                    <h1 class="hero-title">Create Account</h1>
+                    <p class="hero-subtitle">Join StudyQuest and start learning today!</p>
+                    <div class="auth-form">
+                        <div class="form-group">
+                            <label for="regUsername">Username</label>
+                            <input type="text" id="regUsername" placeholder="Your name" autocomplete="name">
+                        </div>
+                        <div class="form-group">
+                            <label for="regEmail">Email</label>
+                            <input type="email" id="regEmail" placeholder="your@email.com" autocomplete="email">
+                        </div>
+                        <div class="form-group">
+                            <label for="regPassword">Password</label>
+                            <input type="password" id="regPassword" placeholder="Choose a password"
+                                autocomplete="new-password">
+                        </div>
+                        <div class="form-group">
+                            <label for="regGrade">Grade / Class</label>
+                            <select id="regGrade">
+                                <option value="5">Class 5</option>
+                                <option value="6">Class 6</option>
+                                <option value="7">Class 7</option>
+                                <option value="8" selected>Class 8</option>
+                                <option value="9">Class 9</option>
+                                <option value="10">Class 10</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary btn-block" onclick="registerStudent()">Create Account ✨</button>
+                        <p class="auth-toggle">Already have an account? <a href="#"
+                                onclick="showLoginForm(); return false;">Log In</a></p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Subject Selection -->
+            <section id="classSubjectSection" class="hidden">
+                <div class="section-header">
+                    <div class="icon">📋</div>
+                    <h2 id="filterSectionTitle">Select Your Subject</h2>
+                </div>
+                <p class="section-subtitle" id="filterSectionSubtitle">Choose your subject to see the available topics.
+                </p>
+
+                <div class="filter-row">
+                    <div class="filter-group" id="classFilterGroup" style="display:none;">
+                        <label for="classSelect">Class</label>
+                        <select id="classSelect" onchange="loadLevels()">
+                            <option value="5">Class 5</option>
+                            <option value="6">Class 6</option>
+                            <option value="7">Class 7</option>
+                            <option value="8">Class 8</option>
+                            <option value="9">Class 9</option>
+                            <option value="10">Class 10</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="subjectSelect">Subject</label>
+                        <select id="subjectSelect" onchange="loadLevels()">
+                            <option value="Science">Science</option>
+                            <option value="Math">Math</option>
+                            <option value="English">English</option>
+                            <option value="Social">Social</option>
+                            <option value="Computer">Computer</option>
+                            <option value="Nepali">Nepali</option>
+                            <option value="Health">Health</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Progress Stats (populated by JS after name entry) -->
+            <section id="progressStats" class="hidden"></section>
+
+            <!-- Levels (populated by JS) -->
+            <section id="levels"></section>
+
+            <!-- Learning / Quiz Area -->
+            <section id="learning"></section>
+
+        </main>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+</body>
+
+</html>

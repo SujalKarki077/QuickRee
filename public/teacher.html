@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="StudyQuest Teacher Dashboard — Create levels, generate AI-powered MCQs, and manage your classroom.">
+    <title>Teacher Dashboard — StudyQuest</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/teacher.js" defer></script>
+</head>
+
+<body>
+
+    <div class="app-wrapper">
+
+        <!-- Navbar -->
+        <nav class="navbar">
+            <a href="index.html" class="navbar-brand">
+                <span class="logo-icon">🎮</span>
+                StudyQuest
+            </a>
+            <div class="navbar-nav">
+                <a href="index.html">Student</a>
+                <a href="teacher.html" class="active">Teacher</a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+
+            <!-- Dashboard Header -->
+            <div class="section-header">
+                <div class="icon">🎓</div>
+                <h2>Teacher Dashboard</h2>
+            </div>
+            <p class="section-subtitle">Create topics, add content, and generate AI-powered quizzes for your students.
+            </p>
+
+            <!-- Step 1: Class & Subject Selection -->
+            <div id="selectClassSubject">
+                <div class="dashboard-grid">
+
+                    <!-- Select Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span>📋</span>
+                            <h3>Class & Subject</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="classSelect">Select Class</label>
+                                <select id="classSelect">
+                                    <option value="5">Class 5</option>
+                                    <option value="6">Class 6</option>
+                                    <option value="7">Class 7</option>
+                                    <option value="8">Class 8</option>
+                                    <option value="9">Class 9</option>
+                                    <option value="10">Class 10</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="subjectSelect">Select Subject</label>
+                                <select id="subjectSelect">
+                                    <option value="Science">Science</option>
+                                    <option value="Math">Math</option>
+                                    <option value="English">English</option>
+                                    <option value="Social">Social</option>
+                                    <option value="Computer">Computer</option>
+                                    <option value="Nepali">Nepali</option>
+                                    <option value="Health">Health</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span>⚡</span>
+                            <h3>Quick Actions</h3>
+                        </div>
+                        <div class="card-body" style="display:flex; flex-direction:column; gap:0.75rem;">
+                            <button class="btn btn-primary btn-block" onclick="showAddLevelForm()">
+                                📝 Add New Topic
+                            </button>
+                            <button class="btn btn-success btn-block" onclick="showMCQForm()">
+                                🤖 Generate MCQ with AI
+                            </button>
+                            <button class="btn btn-ghost btn-block" onclick="showManageLevels()">
+                                📚 View & Manage Topics
+                            </button>
+                            <button class="btn btn-ghost btn-block" onclick="showStudents()"
+                                style="border-color: var(--primary-200); color: var(--primary-600);">
+                                👨‍🎓 View Students
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Add Level Form (hidden) -->
+            <div id="levelFormContainer" class="hidden">
+                <div class="card" style="max-width: 600px;">
+                    <div class="card-header flex-between">
+                        <div style="display:flex; align-items:center; gap:0.75rem;">
+                            <span>📝</span>
+                            <h3>Add New Topic</h3>
+                        </div>
+                        <button class="btn btn-ghost btn-sm" onclick="backToSelect()">← Back</button>
+                    </div>
+                    <div class="card-body">
+                        <form id="levelForm" action="../api/add_level.php" method="POST">
+                            <input type="hidden" name="class" id="formClass">
+                            <input type="hidden" name="subject" id="formSubject">
+                            <div style="margin-bottom:1rem;">
+                                <span id="addTopicBadge" class="badge badge-primary"
+                                    style="font-size:0.8125rem; padding:0.375rem 0.75rem;"></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="levelNo">Topic Number</label>
+                                <input type="number" name="level_no" id="levelNo" placeholder="e.g. 1" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="topicInput">Topic</label>
+                                <input type="text" name="topic" id="topicInput" placeholder="e.g. Photosynthesis"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label for="contentArea">Content</label>
+                                <textarea name="content" id="contentArea" rows="8"
+                                    placeholder="Write the lesson content here...&#10;&#10;Formatting tips:&#10;- Use line breaks for paragraphs&#10;- Use **bold** for key terms&#10;- Use # for headings&#10;- Use - for bullet lists&#10;- Use 1. for numbered lists"
+                                    required></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-block">
+                                ✅ Add Topic
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: MCQ Generation (hidden) -->
+            <div id="mcqFormContainer" class="hidden">
+                <div class="card" style="max-width: 600px;">
+                    <div class="card-header flex-between">
+                        <div style="display:flex; align-items:center; gap:0.75rem;">
+                            <span>🤖</span>
+                            <h3>AI MCQ Generator</h3>
+                        </div>
+                        <button class="btn btn-ghost btn-sm" onclick="backToSelect()">← Back</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="mcqTopicSelect">Select Topic</label>
+                            <select id="mcqTopicSelect">
+                                <option value="">Loading topics...</option>
+                            </select>
+                        </div>
+                        <p style="color: var(--gray-500); margin-bottom: 1rem; font-size: 0.875rem;">
+                            Select a topic above, then click Generate to create an MCQ for that specific topic.
+                        </p>
+                        <button class="btn btn-success btn-block" onclick="generateMCQ()" id="generateBtn">
+                            🤖 Generate MCQ
+                        </button>
+                        <div id="mcqOutput" class="mt-2"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Manage Levels (hidden) -->
+            <div id="manageLevelsContainer" class="hidden">
+                <div class="card">
+                    <div class="card-header flex-between">
+                        <div style="display:flex; align-items:center; gap:0.75rem;">
+                            <span>📚</span>
+                            <h3>Manage Topics</h3>
+                        </div>
+                        <button class="btn btn-ghost btn-sm" onclick="backToSelect()">← Back</button>
+                    </div>
+                    <div class="card-body" id="manageLevelsList">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 5: View Students (hidden) -->
+            <div id="studentsContainer" class="hidden">
+                <div class="card">
+                    <div class="card-header flex-between">
+                        <div style="display:flex; align-items:center; gap:0.75rem;">
+                            <span>👨‍🎓</span>
+                            <h3>Registered Students</h3>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:0.75rem;">
+                            <select id="studentGradeFilter" onchange="loadStudents()"
+                                style="padding:0.375rem 0.75rem; font-size:0.8125rem; border-radius:var(--radius-md); border:1px solid var(--gray-200);">
+                                <option value="">All Classes</option>
+                                <option value="5">Class 5</option>
+                                <option value="6">Class 6</option>
+                                <option value="7">Class 7</option>
+                                <option value="8">Class 8</option>
+                                <option value="9">Class 9</option>
+                                <option value="10">Class 10</option>
+                            </select>
+                            <button class="btn btn-sm btn-success" onclick="generateWeeklyReport()"
+                                style="font-size:0.75rem; padding:0.375rem 0.75rem;">
+                                📊 Weekly Report
+                            </button>
+                            <button class="btn btn-ghost btn-sm" onclick="backToSelect()">← Back</button>
+                        </div>
+                    </div>
+                    <div class="card-body" id="studentsList">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Level Modal -->
+            <div id="editModal" class="modal-overlay hidden">
+                <div class="modal-card">
+                    <div class="card-header flex-between">
+                        <div style="display:flex; align-items:center; gap:0.75rem;">
+                            <span>✏️</span>
+                            <h3>Edit Topic</h3>
+                        </div>
+                        <button class="btn btn-ghost btn-sm" onclick="closeEditModal()">✕</button>
+                    </div>
+                    <div class="card-body">
+                        <input type="hidden" id="editLevelId">
+                        <div class="form-group">
+                            <label for="editTopic">Topic</label>
+                            <input type="text" id="editTopic" placeholder="Topic name">
+                        </div>
+                        <div class="form-group">
+                            <label for="editContent">Content</label>
+                            <textarea id="editContent" rows="5" placeholder="Lesson content..."></textarea>
+                        </div>
+                        <button class="btn btn-primary btn-block" onclick="saveEditLevel()">
+                            💾 Save Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+</body>
+
+</html>
